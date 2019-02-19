@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Form</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+    <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+    <!-- Latest compiled JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+</head>
+<body>
+<div id="div1">
+</div>
+<div id="div2"></div>
+<button id="button2" value="getAll" name="getButton" type="button" style="height: 18px; width:53px; visibility: hidden;" content="getall">
+    getAll
+</button>
+<div class="container" id="containerdiv">
+
+    <h1>Tasks</h1>
+    <form id="myForm" action="">
+        Name : <input type="text" class="form-control" name="name"><br>
+        DueDate : <input type="date" placeholder="MM/DD/YYY" class="form-control" id="date" name="dueDate"><br>
+        status : <select name="status" form="myForm" class="form-control">
+                    <option>completed</option>
+                    <option>not completed</option>
+                 </select><br><br><br>
+            <input type="button" class="btn btn-default" value="submit" id="button"/>
+    </form>
+</div>
+<script>
+      $(document).on("click","#button",function(){
+            var formdata = jQuery('#myForm').serializeArray();
+            var stringdata = {};
+            $.each(formdata, function(i, field){
+                stringdata[field.name] = field.value;
+            });
+            $.ajax({
+            url: "/container/rest/tasks/",
+            type:'POST',
+            data : JSON.stringify(stringdata),
+            dataType : "json",
+            contentType: "application/json",
+            success: function(result){
+                    $("#button2").click();
+                }
+            });
+        });
+        $(document).on("click","#button2",function(){
+            $.ajax({
+                url: "/container/rest/tasks/",
+                type: 'GET',
+                success: function(result){
+                    $('#myTable').remove();
+                    var div = document.getElementById('containerdiv');
+                    div.innerHTML +=
+                        "<table class='table table-hover' id='myTable'><thead><tr><th>Name</th><th>DueDate</th><th>status</th><th></th><th></th>";
+                    var result = JSON.parse(result);
+                    var table = document.getElementById("myTable");
+                    var count = 0;
+                    for(var i=result.length-1;i>=0;i--){
+                        var row = table.insertRow(1);
+                        var cell1 = row.insertCell(0);
+                        var cell2 = row.insertCell(1);
+                        var cell3 = row.insertCell(2);
+                        var cell4 = row.insertCell(3);
+                        var cell5 = row.insertCell(4);
+                        var obj = result[i];
+                        cell1.innerHTML = obj.name;
+                        cell2.innerHTML = obj.dueDate;
+                        cell3.innerHTML = obj.status;
+                        cell4.innerHTML = "<button class='updatebtn form-control' type='button' id=ubtn"+obj.id+">"+'update'+"</button>";
+                        cell5.innerHTML = "<button class='deletebtn form-control' type='button' id=dbtn"+obj.id+">"+'delete'+"</button>";
+                    }
+                }
+            });
+        });
+     $(document).on("click",'.updatebtn',function(){
+          var id = (this.id).replace("ubtn","");
+          console.log(id);
+          var stringdata = {};
+          stringdata["id"] = id;
+          var output ={};
+          $.ajax({
+            url: "/container/rest/tasks/"+id,
+            type: 'GET',
+            success: function(result){
+                output = result;
+            }
+          });
+          var formdata = jQuery('#myForm').serializeArray();
+          $.each(formdata, function(i, field){
+                stringdata[field.name] = field.value;
+          });
+          $.ajax({
+            url: "/Tasks/myServlet/task/" + id,
+            type: 'PUT',
+            data: JSON.stringify(stringdata),
+            dataType: "json",
+            contentType: "application/json",
+            success: function(result){
+                $('#button2').click();
+
+            }
+          });
+          alert("updated");
+     });
+     $(document).on("click",'.deletebtn',function(){
+        var id = (this.id).replace("dbtn","");
+        console.log(id);
+        $.ajax({
+            url:"/container/rest/tasks/"+id,
+            type: 'DELETE',
+            success: function(result){
+                $("#button2").click();
+            }
+        });
+     });
+</script>
+</body>
+</html>
